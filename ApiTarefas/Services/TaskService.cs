@@ -45,6 +45,9 @@ public class TaskService : ITaskService
         var existing = await _unitOfWork.TaskRepository.GetTaskWithDetailsAsync(taskId);
         if (existing == null) throw new TaskNotFoundException(taskId);
 
+        if (dto.Priority != existing.Priority)
+            throw new AppException("A prioridade não pode ser alterada após a criação da tarefa.");
+
         await _unitOfWork.BeginTransactionAsync();
 
         if (existing.Status != dto.Status)
@@ -75,11 +78,12 @@ public class TaskService : ITaskService
             existing.Details = dto.Details;
         }
 
-        _unitOfWork.TaskRepository.Update(existing);
+        await _unitOfWork.TaskRepository.Update(existing);
         await _unitOfWork.CommitAsync();
 
         return _mapper.Map<UpdateTaskDto>(existing);
     }
+
 
     public async Task<bool> DeleteTaskAsync(int taskId)
     {

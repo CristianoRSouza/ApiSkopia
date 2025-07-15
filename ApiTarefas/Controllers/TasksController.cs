@@ -1,5 +1,6 @@
 ﻿using ApiTarefas.Data.Dtos;
 using ApiTarefas.Interfaces.Services;
+using ApiTarefas.Utils.MyException;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -43,16 +44,20 @@ public class TasksController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<UpdateTaskDto>> Update(int id, UpdateTaskDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateTaskDto dto)
     {
         try
         {
-            var updated = await _taskService.UpdateTaskAsync(id, dto, "system");
-            return Ok(updated);
+            var result = await _taskService.UpdateTaskAsync(id, dto, "usuário");
+            return Ok(result);
         }
-        catch (TaskNotFoundException ex)
+        catch (AppException ex)
         {
-            return NotFound(new { error = ex.Message });
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Erro interno no servidor.", detail = ex.Message });
         }
     }
 
